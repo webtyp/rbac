@@ -10,4 +10,4 @@ require (
 	webtyp.com/user v0.3.12
 )
 
-require webtyp.com/storage v0.0.7
+require webtyp.com/storage v0.0.8
