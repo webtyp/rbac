@@ -44,8 +44,6 @@ func (m *Role) DecodeFields(r model.FieldReader) {
 
 type RoleList []*Role
 
-func (s *RoleList) Schema() []model.Field { return nil }
-func (s *RoleList) Pointers() []any     { return nil }
 func (s *RoleList) Len() int             { return len(*s) }
 func (s *RoleList) At(i int) model.Fielder { return (*s)[i] }
 func (s *RoleList) Append() model.Fielder  { v := &Role{}; *s = append(*s, v); return v }
@@ -124,8 +122,6 @@ func (m *Permission) DecodeFields(r model.FieldReader) {
 
 type PermissionList []*Permission
 
-func (s *PermissionList) Schema() []model.Field { return nil }
-func (s *PermissionList) Pointers() []any     { return nil }
 func (s *PermissionList) Len() int             { return len(*s) }
 func (s *PermissionList) At(i int) model.Fielder { return (*s)[i] }
 func (s *PermissionList) Append() model.Fielder  { v := &Permission{}; *s = append(*s, v); return v }
@@ -196,8 +192,6 @@ func (m *UserRole) DecodeFields(r model.FieldReader) {
 
 type UserRoleList []*UserRole
 
-func (s *UserRoleList) Schema() []model.Field { return nil }
-func (s *UserRoleList) Pointers() []any     { return nil }
 func (s *UserRoleList) Len() int             { return len(*s) }
 func (s *UserRoleList) At(i int) model.Fielder { return (*s)[i] }
 func (s *UserRoleList) Append() model.Fielder  { v := &UserRole{}; *s = append(*s, v); return v }
@@ -264,8 +258,6 @@ func (m *RolePermission) DecodeFields(r model.FieldReader) {
 
 type RolePermissionList []*RolePermission
 
-func (s *RolePermissionList) Schema() []model.Field { return nil }
-func (s *RolePermissionList) Pointers() []any     { return nil }
 func (s *RolePermissionList) Len() int             { return len(*s) }
 func (s *RolePermissionList) At(i int) model.Fielder { return (*s)[i] }
 func (s *RolePermissionList) Append() model.Fielder  { v := &RolePermission{}; *s = append(*s, v); return v }
