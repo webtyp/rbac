@@ -9,7 +9,7 @@ REVIEWER: none
 > **Phase B** of
 > [`LAN_RUT_AUTH_MASTER_PLAN.md`](https://github.com/tinywasm/app/blob/main/docs/LAN_RUT_AUTH_MASTER_PLAN.md).
 > Parallel with phase A (`webtyp/auth`); the leaf app (phase D) waits for both
-> tags. Doctrine: `CONSTRUCTION_HARNESS.md` in `tinywasm/app` docs.
+> tags. Doctrine: the [`api-design` skill](https://github.com/webtyp/devskills/blob/main/skills/api-design/SKILL.md).
 
 # Plan — `webtyp.com/rbac`: one call per resource, not four
 
