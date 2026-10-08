@@ -1,9 +1,9 @@
 package rbac
 
 import (
-	"webtyp.com/fmt"
 	"webtyp.com/model"
 	"webtyp.com/orm"
+	"webtyp.com/storage"
 )
 
 func (m *Service) CreateRole(projectID, id string, code model.RoleCode, name, description string) error {
@@ -15,7 +15,7 @@ func (m *Service) CreateRole(projectID, id string, code model.RoleCode, name, de
 		if codeErr == nil && existingByCode.Id != id {
 			return ErrDuplicateRoleCode
 		}
-		if codeErr != nil && codeErr != ErrRoleNotFound && codeErr != orm.ErrNotFound {
+		if codeErr != nil && !IsRoleNotFound(codeErr) && !orm.IsNotFound(codeErr) {
 			return codeErr
 		}
 		existingByID.Code = string(code)
@@ -23,7 +23,7 @@ func (m *Service) CreateRole(projectID, id string, code model.RoleCode, name, de
 		existingByID.Description = description
 		return m.db.Update(existingByID, orm.Eq(Role_.ProjectId, existingByID.ProjectId), orm.Eq(Role_.Id, existingByID.Id))
 	}
-	if err != ErrRoleNotFound && err != orm.ErrNotFound {
+	if err != nil && !IsRoleNotFound(err) && !orm.IsNotFound(err) {
 		return err
 	}
 
@@ -32,7 +32,7 @@ func (m *Service) CreateRole(projectID, id string, code model.RoleCode, name, de
 	if codeErr == nil && existingByCode.Id != id {
 		return ErrDuplicateRoleCode
 	}
-	if codeErr != nil && codeErr != ErrRoleNotFound && codeErr != orm.ErrNotFound {
+	if codeErr != nil && !IsRoleNotFound(codeErr) && !orm.IsNotFound(codeErr) {
 		return codeErr
 	}
 
@@ -173,7 +173,7 @@ func (m *Service) RevokeRole(projectID, userID, roleID string) error {
 	qb := m.db.Query(ur).Where(UserRole_.ProjectId).Eq(projectID).Where(UserRole_.UserId).Eq(userID).Where(UserRole_.RoleId).Eq(roleID)
 	ur, err := ReadOneUserRole(qb, ur)
 	if err != nil {
-		if err == orm.ErrNotFound || fmt.Contains(err.Error(), "no rows") {
+		if orm.IsNotFound(err) || storage.IsNoRows(err) {
 			return nil
 		}
 		return err
