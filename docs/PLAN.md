@@ -2,8 +2,9 @@
 PLAN: "fix: detect sentinel errors without == between interfaces (no reflection in wasm)"
 EXECUTOR: jules
 REVIEWER: none
-STATUS: running
+STATUS: review
 SESSION: 1140903686811977719
+PR: https://github.com/webtyp/rbac/pull/3
 ---
 
 # Plan — `rbac`: errores centinela sin `==` entre interfaces
