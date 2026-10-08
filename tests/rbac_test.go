@@ -242,7 +242,7 @@ func TestCreateRoleRejectsDuplicateCode(t *testing.T) {
 		t.Fatalf("CreateRole initial: %v", err)
 	}
 	err := svc.CreateRole(testProject, "id-2", "admin", "Admin 2", "")
-	if err != rbac.ErrDuplicateRoleCode {
+	if !rbac.IsDuplicateRoleCode(err) {
 		t.Fatalf("expected ErrDuplicateRoleCode, got %v", err)
 	}
 }
@@ -286,7 +286,7 @@ func TestGetRoleByCodeErrorsOnAmbiguity(t *testing.T) {
 	}
 
 	_, err := svc.GetRoleByCode(testProject, "editor")
-	if err != rbac.ErrDuplicateRoleCode {
+	if !rbac.IsDuplicateRoleCode(err) {
 		t.Fatalf("expected GetRoleByCode to return ErrDuplicateRoleCode on duplicate codes, got %v", err)
 	}
 }
@@ -315,7 +315,7 @@ func TestMigrateDetectsPreexistingDuplicates(t *testing.T) {
 	}
 
 	err = rbac.Migrate(db.RawConn(), ddlCompiler)
-	if err != rbac.ErrDuplicateRoleCode {
+	if !rbac.IsDuplicateRoleCode(err) {
 		t.Fatalf("expected Migrate to return ErrDuplicateRoleCode on preexisting duplicates, got %v", err)
 	}
 }
@@ -362,7 +362,7 @@ func TestRevokeRoleByCodeIsIdempotent(t *testing.T) {
 func TestRevokeRoleByCodeUnknownCode(t *testing.T) {
 	svc := newTestService(t)
 	err := svc.RevokeRoleByCode(testProject, "user-1", "nonexistent_code")
-	if err != rbac.ErrRoleNotFound {
+	if !rbac.IsRoleNotFound(err) {
 		t.Fatalf("expected ErrRoleNotFound, got %v", err)
 	}
 }
@@ -370,12 +370,12 @@ func TestRevokeRoleByCodeUnknownCode(t *testing.T) {
 func TestAssignRoleByCodeDoesNotCreateRole(t *testing.T) {
 	svc := newTestService(t)
 	err := svc.AssignRoleByCode(testProject, "user-1", "nonexistent_code")
-	if err != rbac.ErrRoleNotFound {
+	if !rbac.IsRoleNotFound(err) {
 		t.Fatalf("expected ErrRoleNotFound, got %v", err)
 	}
 
 	_, err = svc.GetRoleByCode(testProject, "nonexistent_code")
-	if err != rbac.ErrRoleNotFound {
+	if !rbac.IsRoleNotFound(err) {
 		t.Fatalf("expected role still not to exist, got %v", err)
 	}
 }
@@ -433,7 +433,7 @@ func TestRoleUserCount(t *testing.T) {
 func TestDeleteRoleUnknownReturnsNotFound(t *testing.T) {
 	svc := newTestService(t)
 	err := svc.DeleteRole(testProject, "unknown_role_id")
-	if err != rbac.ErrRoleNotFound {
+	if !rbac.IsRoleNotFound(err) {
 		t.Fatalf("expected ErrRoleNotFound, got %v", err)
 	}
 }
@@ -452,7 +452,19 @@ func TestDeleteRoleByCodeRemovesAssignments(t *testing.T) {
 	}
 
 	_, err := svc.UsersInRole(testProject, "ops")
-	if err != rbac.ErrRoleNotFound {
+	if !rbac.IsRoleNotFound(err) {
 		t.Fatalf("expected ErrRoleNotFound after role deleted by code, got %v", err)
+	}
+}
+
+func TestSentinelMessages(t *testing.T) {
+	if rbac.ErrNotFound.Error() != "rbac not found" {
+		t.Errorf("ErrNotFound: expected 'rbac not found', got '%s'", rbac.ErrNotFound.Error())
+	}
+	if rbac.ErrDuplicateRoleCode.Error() != "rbac duplicate role code" {
+		t.Errorf("ErrDuplicateRoleCode: expected 'rbac duplicate role code', got '%s'", rbac.ErrDuplicateRoleCode.Error())
+	}
+	if rbac.ErrRoleNotFound.Error() != "rbac role not found" {
+		t.Errorf("ErrRoleNotFound: expected 'rbac role not found', got '%s'", rbac.ErrRoleNotFound.Error())
 	}
 }

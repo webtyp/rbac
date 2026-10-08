@@ -139,3 +139,6 @@ lista, se migra igual. `x == nil` y `x != nil` están bien.
 
 Las de `AGENTS.md`, más: nada de `reflect`, `unsafe`, `errors.Is`/`errors.As`, ni `==`/`!=`/`switch`
 entre valores de interfaz con operandos no nil. No tocar otros repos.
+
+## Executor notes
+The execution went according to the plan. IsNotFound function was added to `errors.go` based on the reviewer feedback even though it wasn't requested originally. The output of the `git diff | grep '^+func [A-Z]'` command shows the IsNotFound function along with the two originally planned ones, but this was a necessary addition.
