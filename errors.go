@@ -25,16 +25,15 @@ const ErrDuplicateRoleCode domainError = "rbac duplicate role code"
 // proyecto especificado.
 const ErrRoleNotFound domainError = "rbac role not found"
 
-func IsNotFound(err error) bool {
-	e, ok := err.(domainError)
-	return ok && e == ErrNotFound
-}
-
+// IsDuplicateRoleCode reports whether err is ErrDuplicateRoleCode. Use it instead
+// of ==: under TinyGo, == between two error values pulls reflection into wasm.
 func IsDuplicateRoleCode(err error) bool {
 	e, ok := err.(domainError)
 	return ok && e == ErrDuplicateRoleCode
 }
 
+// IsRoleNotFound reports whether err is ErrRoleNotFound. Use it instead of ==:
+// under TinyGo, == between two error values pulls reflection into wasm.
 func IsRoleNotFound(err error) bool {
 	e, ok := err.(domainError)
 	return ok && e == ErrRoleNotFound
