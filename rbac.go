@@ -300,6 +300,23 @@ type RBACObject interface {
 	AllowedRoles(action model.Action) []model.RoleCode
 }
 
+// ListRoles returns every role of projectID, ordered by code. A project with
+// no roles returns an empty slice and a nil error.
+//
+// Example: roles, err := svc.ListRoles("mjosefa-cms")
+func (m *Service) ListRoles(projectID string) ([]Role, error) {
+	qb := m.db.Query(&Role{}).Where(Role_.ProjectId).Eq(projectID).OrderBy(Role_.Code).Asc()
+	ptrs, err := ReadAllRole(qb)
+	if err != nil {
+		return nil, err
+	}
+	roles := make([]Role, len(ptrs))
+	for i, r := range ptrs {
+		roles[i] = *r
+	}
+	return roles, nil
+}
+
 func (m *Service) GetRoleByCode(projectID string, code model.RoleCode) (*Role, error) {
 	qb := m.db.Query(&Role{}).Where(Role_.ProjectId).Eq(projectID).Where(Role_.Code).Eq(string(code))
 	roles, err := ReadAllRole(qb)
