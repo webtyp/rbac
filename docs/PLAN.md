@@ -2,6 +2,8 @@
 PLAN: "feat: ListRoles — list a project's roles through the Service"
 EXECUTOR: jules
 REVIEWER: none
+STATUS: running
+SESSION: 763602360687102089
 ---
 
 > Read AGENTS.md at the repo root before any change.
