@@ -2,8 +2,10 @@
 PLAN: "feat: ListRoles — list a project's roles through the Service"
 EXECUTOR: jules
 REVIEWER: none
-STATUS: running
+STATUS: review
 SESSION: 763602360687102089
+PR: https://github.com/webtyp/rbac/pull/4
+REVIEWED_COMMIT: 6eb24217a7cf25e3be5c59427fd489ec2ad2c1aa
 ---
 
 > Read AGENTS.md at the repo root before any change.

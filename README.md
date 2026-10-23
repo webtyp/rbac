@@ -66,6 +66,7 @@ silent `false, nil`).
 
 | Objetivo | Método |
 |---|---|
+| Listar roles | `svc.ListRoles(projectID) ([]Role, error)` (every role of a project, ordered by code) |
 | Asignar rol por código | `svc.AssignRoleByCode(projectID, userID, roleCode)` |
 | Revocar rol por código (invalida caché) | `svc.RevokeRoleByCode(projectID, userID, roleCode)` |
 | Listar usuarios de un rol | `svc.UsersInRole(projectID, roleCode)` |
