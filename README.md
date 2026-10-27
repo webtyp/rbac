@@ -73,3 +73,4 @@ silent `false, nil`).
 | Contar usuarios de un rol | `svc.RoleUserCount(projectID, roleCode)` |
 | Eliminar rol y asignaciones por código | `svc.DeleteRoleByCode(projectID, roleCode)` |
 | Detectar roles duplicados antes de migrar | `rbac.FindDuplicateRoleCodes(db)` |
+| Permisos de un sujeto tal como están guardados (para el navegador) | `svc.SubjectGrants(projectID, subjectID) ([]model.Grant, error)` — evaluar con `model.AnyGrant` |

@@ -3,8 +3,10 @@ PLAN: "feat: SubjectGrants — a subject's grants as stored, one wildcard rule f
 TAG: v0.0.22
 EXECUTOR: jules
 REVIEWER: none
-STATUS: running
+STATUS: review
 SESSION: 4226310205405502716
+PR: https://github.com/webtyp/rbac/pull/5
+REVIEWED_COMMIT: 3b1699c25a1beafd10832ad95b267f2edccb0a0d
 ---
 
 > Read AGENTS.md at the repo root before any change.
