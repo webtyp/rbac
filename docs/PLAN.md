@@ -3,6 +3,8 @@ PLAN: "feat: SubjectGrants — a subject's grants as stored, one wildcard rule f
 TAG: v0.0.22
 EXECUTOR: jules
 REVIEWER: none
+STATUS: running
+SESSION: 4226310205405502716
 ---
 
 > Read AGENTS.md at the repo root before any change.
