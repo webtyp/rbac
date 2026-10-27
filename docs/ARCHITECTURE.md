@@ -49,6 +49,8 @@ flowchart TD
     B --> E[Authorization decision<br/>Can / HasPermission]
 ```
 
+`SubjectGrants` returns the rows unexpanded; `HasPermission` is `model.AnyGrant` over them, so there is one wildcard rule.
+
 Cache invalidation is encapsulated in the service: mutations delete or
 invalidate the per-`(projectID, subjectID)` cache entry. Empty or unknown
 `SubjectID` is denied — there is no "user" row to look up, only assignments

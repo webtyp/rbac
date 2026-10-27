@@ -369,31 +369,37 @@ func registerRBAC(m *Service, projectID string, handlers ...RBACObject) error {
 	return nil
 }
 
-func (m *Service) HasPermission(projectID, subjectID string, resource model.Resource, action model.Action) (bool, error) {
+// SubjectGrants returns every grant subjectID holds within projectID, as stored:
+// a wildcard grant stays {Resource: model.Wildcard}, never expanded. Evaluate the
+// result with model.AnyGrant — the same rule HasPermission applies — so a server
+// and a browser agree on what "*" means. An empty or unknown subject has no
+// grants (nil, nil). A stored action that is not a CRUD string is an error, never
+// a silently dropped grant.
+func (m *Service) SubjectGrants(projectID, subjectID string) ([]model.Grant, error) {
 	if subjectID == "" {
-		return false, nil
+		return nil, nil
 	}
 	g, err := m.subjectGrants(projectID, subjectID)
 	if err != nil {
+		return nil, err
+	}
+	grants := make([]model.Grant, 0, len(g.Permissions))
+	for _, p := range g.Permissions {
+		actions, err := model.ParseAction(p.Action)
+		if err != nil {
+			return nil, err
+		}
+		grants = append(grants, model.Grant{Resource: model.Resource(p.Resource), Actions: actions})
+	}
+	return grants, nil
+}
+
+func (m *Service) HasPermission(projectID, subjectID string, resource model.Resource, action model.Action) (bool, error) {
+	grants, err := m.SubjectGrants(projectID, subjectID)
+	if err != nil {
 		return false, err
 	}
-
-	for _, p := range g.Permissions {
-		// Una acción ilegible NO se salta: saltarla borra el permiso real en silencio y deja
-		// la fila corrupta invisible para siempre. Denegar sí; callar no.
-		pAction, err := model.ParseAction(p.Action)
-		if err != nil {
-			return false, err
-		}
-		grant := model.Grant{
-			Resource: model.Resource(p.Resource),
-			Actions:  pAction,
-		}
-		if grant.Matches(resource, action) {
-			return true, nil
-		}
-	}
-	return false, nil
+	return model.AnyGrant(grants, resource, action), nil
 }
 
 func (m *Service) subjectGrants(projectID, subjectID string) (*subjectGrants, error) {
