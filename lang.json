@@ -1,0 +1,14 @@
+{
+  "languages": ["es", "zh", "hi", "ar", "pt", "fr", "de", "ru"],
+  "keys": {
+    "code": ["código", "", "", "", "", "", "", ""],
+    "description": ["descripción", "", "", "", "", "", "", ""],
+    "name": ["nombre", "", "", "", "", "", "", ""],
+    "permission id": ["id del permiso", "", "", "", "", "", "", ""],
+    "project id": ["id del proyecto", "", "", "", "", "", "", ""],
+    "resource": ["recurso", "", "", "", "", "", "", ""],
+    "role id": ["id del rol", "", "", "", "", "", "", ""],
+    "session ttl": ["duración de la sesión", "", "", "", "", "", "", ""],
+    "user id": ["id de la persona usuaria", "", "", "", "", "", "", ""]
+  }
+}
