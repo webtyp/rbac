@@ -115,20 +115,22 @@ func (m *Service) CreatePermission(projectID, id, name string, resource model.Re
 		Resource:  string(resource),
 		Action:    action.String(),
 	}
-	err := m.db.Create(p)
-	if err != nil && isUniqueViolation(err) {
-		existingP := &Permission{}
-		qb := m.db.Query(existingP).Where(Permission_.ProjectId).Eq(projectID).Where(Permission_.Id).Eq(id)
-		existingP, readErr := ReadOnePermission(qb, existingP)
-		if readErr != nil {
-			return readErr
-		}
-		existingP.Name = name
-		existingP.Resource = string(resource)
-		existingP.Action = action.String()
-		return m.db.Update(existingP, orm.Eq(Permission_.ProjectId, existingP.ProjectId), orm.Eq(Permission_.Id, existingP.Id))
+	// Look first, never "insert and ignore the duplicate": inside a transaction (an import) PostgreSQL aborts the
+	// whole transaction on the failed INSERT, even if the error is ignored here.
+	existing := &Permission{}
+	qb := m.db.Query(existing).Where(Permission_.ProjectId).Eq(projectID).Where(Permission_.Id).Eq(id)
+	existing, err := ReadOnePermission(qb, existing)
+	switch {
+	case err == nil:
+		existing.Name = name
+		existing.Resource = string(resource)
+		existing.Action = action.String()
+		return m.db.Update(existing, orm.Eq(Permission_.ProjectId, existing.ProjectId), orm.Eq(Permission_.Id, existing.Id))
+	case orm.IsNotFound(err):
+		return m.db.Create(p)
+	default:
+		return err
 	}
-	return err
 }
 
 func (m *Service) GetPermission(projectID, id string) (*Permission, error) {
@@ -158,14 +160,15 @@ func (m *Service) AssignRole(projectID, userID, roleID string) error {
 		UserId:    userID,
 		RoleId:    roleID,
 	}
-	err := m.db.Create(ur)
-	if err != nil && isUniqueViolation(err) {
-		return nil // Ignore duplicates
+	// Look first (see CreatePermission): an INSERT that fails aborts the caller's transaction.
+	if m.db.Query(&UserRole{}).Where(UserRole_.ProjectId).Eq(projectID).Where(UserRole_.UserId).Eq(userID).Where(UserRole_.RoleId).Eq(roleID).ReadOne() == nil {
+		return nil // already assigned
 	}
-	if err == nil {
-		m.ucache.Delete(projectID, userID) // Invalidate user to reload roles
+	if err := m.db.Create(ur); err != nil {
+		return err
 	}
-	return err
+	m.ucache.Delete(projectID, userID) // Invalidate user to reload roles
+	return nil
 }
 
 func (m *Service) RevokeRole(projectID, userID, roleID string) error {
@@ -285,14 +288,15 @@ func (m *Service) AssignPermission(projectID, roleID, permissionID string) error
 		RoleId:       roleID,
 		PermissionId: permissionID,
 	}
-	err := m.db.Create(rp)
-	if err != nil && isUniqueViolation(err) {
-		return nil // Ignore duplicates
+	// Look first (see CreatePermission): an INSERT that fails aborts the caller's transaction.
+	if m.db.Query(&RolePermission{}).Where(RolePermission_.ProjectId).Eq(projectID).Where(RolePermission_.RoleId).Eq(roleID).Where(RolePermission_.PermissionId).Eq(permissionID).ReadOne() == nil {
+		return nil // already assigned
 	}
-	if err == nil {
-		m.ucache.InvalidateByRole(roleID) // Invalidate users with this role
+	if err := m.db.Create(rp); err != nil {
+		return err
 	}
-	return err
+	m.ucache.InvalidateByRole(roleID) // Invalidate users with this role
+	return nil
 }
 
 type RBACObject interface {

@@ -1,7 +1,10 @@
 package tests
 
 import (
+	"path/filepath"
+
 	"testing"
+	"webtyp.com/sqlite"
 
 	"webtyp.com/ddl"
 	"webtyp.com/model"
@@ -292,13 +295,21 @@ func TestGetRoleByCodeErrorsOnAmbiguity(t *testing.T) {
 }
 
 func TestMigrateDetectsPreexistingDuplicates(t *testing.T) {
-	db := orm.New(mem.New())
-	ddlCompiler := &mockCompiler{}
-
-	// Pre-create table and seed duplicate role rows directly
-	if err := db.RawConn().Exec("CREATE TABLE role (project_id TEXT, id TEXT, code TEXT, name TEXT, description TEXT, session_ttl INT, PRIMARY KEY(project_id, id))"); err != nil {
-		t.Fatalf("exec create table: %v", err)
+	// Real SQL (SQLite in a temp file): Migrate syncs the tables and then must find the duplicates.
+	conn, err := sqlite.Open(filepath.Join(t.TempDir(), "rbac.db"))
+	if err != nil {
+		t.Fatal(err)
 	}
+	ddlCompiler, ok := sqlite.DDLCompiler(conn)
+	if !ok {
+		t.Fatal("sqlite must give a ddl.Compiler")
+	}
+	db := orm.New(conn)
+	if err := ddl.New(conn, ddlCompiler).Sync(&rbac.Role{}); err != nil {
+		t.Fatal(err)
+	}
+
+	// Seed duplicate role rows directly (bypassing CreateRole, before the unique index exists)
 	if err := db.Create(&rbac.Role{ProjectId: "proj-dup", Id: "r1", Code: "dupcode", Name: "N1"}); err != nil {
 		t.Fatalf("db.Create r1: %v", err)
 	}
@@ -466,5 +477,29 @@ func TestSentinelMessages(t *testing.T) {
 	}
 	if rbac.ErrRoleNotFound.Error() != "rbac role not found" {
 		t.Errorf("ErrRoleNotFound: expected 'rbac role not found', got '%s'", rbac.ErrRoleNotFound.Error())
+	}
+}
+
+// Assigning twice must not issue a failing INSERT: inside an import transaction PostgreSQL would abort everything.
+func TestAssignTwiceIssuesNoDuplicateInsert(t *testing.T) {
+	svc := newTestService(t)
+	if err := svc.CreateRole("p", "r1", "editor", "Editor", ""); err != nil {
+		t.Fatal(err)
+	}
+	for i := 0; i < 2; i++ {
+		if err := svc.AssignRole("p", "u1", "r1"); err != nil {
+			t.Fatalf("AssignRole #%d: %v", i+1, err)
+		}
+	}
+	if err := svc.CreatePermission("p", "perm1", "Read", "doc", model.Read); err != nil {
+		t.Fatal(err)
+	}
+	for i := 0; i < 2; i++ {
+		if err := svc.CreatePermission("p", "perm1", "Read docs", "doc", model.Read); err != nil {
+			t.Fatalf("CreatePermission #%d: %v", i+1, err)
+		}
+		if err := svc.AssignPermission("p", "r1", "perm1"); err != nil {
+			t.Fatalf("AssignPermission #%d: %v", i+1, err)
+		}
 	}
 }

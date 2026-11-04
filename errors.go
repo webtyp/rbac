@@ -1,7 +1,5 @@
 package rbac
 
-import "webtyp.com/fmt"
-
 // domainError is the concrete type of this package's sentinel errors. Code
 // compares them by asserting this type and comparing the value: == between two
 // error values compiles, under TinyGo, to runtime.interfaceEqual, which pulls
@@ -37,10 +35,4 @@ func IsDuplicateRoleCode(err error) bool {
 func IsRoleNotFound(err error) bool {
 	e, ok := err.(domainError)
 	return ok && e == ErrRoleNotFound
-}
-
-func isUniqueViolation(err error) bool {
-	return fmt.Contains(err.Error(), "UNIQUE constraint failed") ||
-		fmt.Contains(err.Error(), "constraint: unique") ||
-		fmt.Contains(err.Error(), "duplicate key")
 }
