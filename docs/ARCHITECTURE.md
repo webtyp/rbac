@@ -98,3 +98,14 @@ Dentro de un mismo proyecto (`project_id`), el par `(project_id, code)` debe ser
 El servicio mantiene un caché en memoria (`ucache`) para acelerar la resolución de permisos (`HasPermission` / `Can`). Cuando se otorgan o revocan roles y permisos a través de los métodos typed del servicio (`AssignRoleByCode`, `RevokeRoleByCode`, `DeleteRoleByCode`, `DeleteRole`), el caché invalida las entradas del usuario o rol correspondiente de forma automática.
 
 **Antipatrón a evitar:** Eliminar filas directamente con la base de datos (e.g., `db.Delete(&rbac.UserRole{}, ...)`). Saltearse los contratos expuestos por `Service` evita la invalidación de `ucache`, provocando que los permisos supuestamente revocados continúen concediéndose desde la memoria hasta la expiración o desalojo FIFO del caché.
+
+## El rol implícito `RoleAuthenticated` en `resolveSubjectGrants`
+
+Para permitir operaciones comunes a cualquier sujeto con una sesión abierta (sin requerir registros explícitos en `user_role` para cada persona que se registra), el motor de resolución `resolveSubjectGrants` incorpora automáticamente el rol con código `RoleAuthenticated` ("authenticated") para todo `subjectID != ""` dentro del proyecto:
+
+1. Si `subjectID == ""`, se deniega de inmediato devolviendo permisos vacíos.
+2. Si `subjectID != ""`, además de leer los `UserRole` del usuario, consulta si existe el rol con `Code == "authenticated"` en el proyecto.
+3. Si existe, agrega su ID a `roleIDs` y carga sus permisos correspondientes.
+4. Por lo tanto, un usuario sin ningún rol explícito asignado adquiere de inmediato todos los permisos configurados para `RoleAuthenticated`.
+
+El método `EnsureGrants(projectID, rbac.RoleAuthenticated, grants)` asegura la existencia del rol y sus permisos de manera idempotente e invalida el caché automáticamente.

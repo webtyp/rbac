@@ -16,18 +16,36 @@ type subjectGrants struct {
 func resolveSubjectGrants(db *orm.DB, projectID, subjectID string) (*subjectGrants, error) {
 	g := &subjectGrants{SubjectID: subjectID, Roles: []Role{}, Permissions: []Permission{}}
 
-	qbUserRoles := db.Query(&UserRole{}).Where(UserRole_.ProjectId).Eq(projectID).Where(UserRole_.UserId).Eq(subjectID)
-	userRoles, err := ReadAllUserRole(qbUserRoles)
-	if err != nil {
-		return nil, err
-	}
-	if len(userRoles) == 0 {
-		return g, nil
+	var roleIDs []any
+
+	if subjectID != "" {
+		qbUserRoles := db.Query(&UserRole{}).Where(UserRole_.ProjectId).Eq(projectID).Where(UserRole_.UserId).Eq(subjectID)
+		userRoles, err := ReadAllUserRole(qbUserRoles)
+		if err != nil {
+			return nil, err
+		}
+		for _, ur := range userRoles {
+			roleIDs = append(roleIDs, ur.RoleId)
+		}
+
+		authRole := &Role{}
+		qbAuth := db.Query(authRole).Where(Role_.ProjectId).Eq(projectID).Where(Role_.Code).Eq(string(RoleAuthenticated))
+		if err := qbAuth.ReadOne(); err == nil {
+			already := false
+			for _, rid := range roleIDs {
+				if rid == authRole.Id {
+					already = true
+					break
+				}
+			}
+			if !already {
+				roleIDs = append(roleIDs, authRole.Id)
+			}
+		}
 	}
 
-	var roleIDs []any
-	for _, ur := range userRoles {
-		roleIDs = append(roleIDs, ur.RoleId)
+	if len(roleIDs) == 0 {
+		return g, nil
 	}
 
 	qbRoles := db.Query(&Role{}).Where(Role_.ProjectId).Eq(projectID).Where(Role_.Id).In(roleIDs)

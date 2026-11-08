@@ -57,6 +57,22 @@ if svc.Can(projectID, string(subjectID), "service_catalog", model.Read) {
 }
 ```
 
+## Anyone signed in (`RoleAuthenticated` and `EnsureGrants`)
+
+Some operations belong to every signed-in subject (e.g. writing in a chatroom, opening a direct message). Multi-tenant systems grant these to `rbac.RoleAuthenticated`:
+
+```go
+const RoleAuthenticated model.RoleCode = "authenticated"
+```
+
+A module declares its default grants (`DefaultGrants`), and the app ensures them at boot time:
+
+```go
+err := svc.EnsureGrants(app.TenantID, rbac.RoleAuthenticated, chatroom.DefaultGrants)
+```
+
+`EnsureGrants` is idempotent: it ensures the role exists, creates any missing permissions, and assigns them to the role. Any subject with a non-empty `subjectID` automatically holds `RoleAuthenticated` without needing an explicit `UserRole` record.
+
 Empty or unknown subject IDs are denied — rbac never persists a "user" row,
 so a subject with no assignments simply resolves to zero permissions, not
 an error. Malformed stored actions deny and surface an error (never a
@@ -66,6 +82,7 @@ silent `false, nil`).
 
 | Objetivo | Método |
 |---|---|
+| Aplicar permisos por defecto a cualquier usuario autenticado | `svc.EnsureGrants(projectID, rbac.RoleAuthenticated, grants)` |
 | Listar roles | `svc.ListRoles(projectID) ([]Role, error)` (every role of a project, ordered by code) |
 | Asignar rol por código | `svc.AssignRoleByCode(projectID, userID, roleCode)` |
 | Revocar rol por código (invalida caché) | `svc.RevokeRoleByCode(projectID, userID, roleCode)` |

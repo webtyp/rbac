@@ -1,93 +1,77 @@
 ---
-PLAN: "chore: drop the Schema()/Pointers() stubs from list types"
-EXECUTOR: jules
+PLAN: "feat: implicit role authenticated — every signed-in subject holds it; EnsureGrants applies a module's default grants"
+EXECUTOR: antigravity
 REVIEWER: none
 ---
 
-> This plan is dispatched via the CodeJob workflow. See skill: agents-workflow.
->
-> **Phase C** of
-> [`LIST_CONTRACT_MASTER_PLAN.md`](https://github.com/webtyp/docs/blob/main/LIST_CONTRACT_MASTER_PLAN.md).
-> Runs in parallel with the other phase-C repos.
->
-> **Depends on phase A** (`webtyp.com/model`) and **phase B** (`webtyp.com/ormc`).
-> As the first line of work: `go get webtyp.com/model@latest`. Never add a
-> `replace`, never invent a version.
+> Read AGENTS.md at the repo root before any change.
+> **Finish by yourself:** when the delivery check passes, commit after every stage and stop. Never ask whether to
+> proceed. This plan runs **locally** and is **published as soon as the delivery check passes** (no `replace` anywhere).
+> Never run `git reset`, `git restore`, `git checkout -- <file>` or `git stash` on your own work.
 
-# Plan — `webtyp.com/rbac`: a list stops claiming it has columns
+# Plan: the `authenticated` role
 
-## 0. Context (verified against the repo — do not re-diagnose)
+## Tools
 
-`model.FielderSlice` used to embed `model.Fielder`, so every list type had to
-answer "what are your columns?" — a question a sequence of rows cannot have.
-`ormc` therefore emitted, on every generated list:
+```bash
+go install webtyp.com/devflow/cmd/gotest@latest
+go install webtyp.com/lang/cmd/langc@latest
+```
+
+## Why
+
+Decision D24 of `webtyp/docs/ARCHITECTURE_MASTER_PLAN.md`. Some actions belong to every signed-in person (write in the
+chat, open a direct conversation, mark read). With crud every action requires a resource, and «anyone signed in» must stay
+a grant in RBAC (data, adjustable per installation), never a flag in code. Prior art: Django REST `IsAuthenticated`
+(https://www.django-rest-framework.org/api-guide/permissions/#isauthenticated), Keycloak default roles
+(https://www.keycloak.org/docs/latest/server_admin/#_default_roles).
+
+## Stage 1 — `authenticated.go` (new)
 
 ```go
-func (s *XList) Schema() []model.Field { return nil }
-func (s *XList) Pointers() []any       { return nil }
+// RoleAuthenticated is held by every subject with a non-empty id, without a UserRole row. Grant it what any signed-in
+// person may do; a module declares those grants (DefaultGrants) and the app applies them with EnsureGrants.
+const RoleAuthenticated model.RoleCode = "authenticated"
+
+// EnsureGrants makes role exist in projectID (id = its code, name = its code) and gives it every grant, creating the
+// permissions it needs. Idempotent: running it again changes nothing.
+//
+//	err := svc.EnsureGrants(app.TenantID, rbac.RoleAuthenticated, chatroom.DefaultGrants)
+func (m *Service) EnsureGrants(projectID string, role model.RoleCode, grants []model.Grant) error
 ```
+Body: `GetRoleByCode`; not found (`IsRoleNotFound`) → `CreateRole(projectID, string(role), role, string(role), "")`. For each grant and
+each action bit in `grant.Actions` (`model.Create`, `Read`, `Update`, `Delete`): `permID := string(grant.Resource) + ":" + action.String()`
+(the same id `registerRBAC` uses, `rbac.go:357`); create the permission if missing (`GetPermission` not found → `CreatePermission`) and
+`AssignPermission(projectID, roleID, permID)` if not assigned yet. Then `m.ucache.InvalidateByRole(roleID)`.
 
-Nothing ever called them: the json codec reaches rows through
-`Len()`/`At()`/`Append()` and type-asserts the **element**, never the list.
+## Stage 2 — `subject_grants.go`
 
-The harm is that having them made the lie true for the compiler. A list
-satisfies `model.Fielder`, so `Accepts(&XList{})` compiles and
-`mcp/tool_schema.go` believes it, publishing the tool **advertising that it
-takes no arguments** — no error, no log.
+In `resolveSubjectGrants`, for `subjectID != ""`: also load the role with code `RoleAuthenticated` of `projectID` (if it exists) and
+add its id to `roleIDs` before reading roles and role permissions — even when the subject has no `UserRole` rows (today the
+function returns early at `len(userRoles) == 0`; that early return now happens only when there are no user roles **and** no
+authenticated role). An empty `subjectID` still gets nothing (`SubjectGrants` returns `nil, nil` first — unchanged).
 
-Phase A narrowed `FielderSlice` to `Len`/`At`/`Append`; phase B stopped `ormc`
-emitting the two stubs. This repo now carries them as dead weight. Removing them
-is what closes the hole **here**: until it regenerates, its list types still
-satisfy `model.Fielder`.
+## Stage 3 — tests (`tests/authenticated_test.go`, rows in `docs/TESTS.md`), `orm.New(mem.New())`
 
-**This is not a size optimization.** Measured: ~27 bytes per list type, 0,02 %
-of a real WASM client. Do not justify or scope this change by binary size.
+| Test | Expected |
+|---|---|
+| `TestAuthenticated_AnySubjectHoldsIt` | `EnsureGrants(p, RoleAuthenticated, [{chat_message, Create}])`; subject "u1" with no roles → `Can(p,"u1","chat_message",Create)` true |
+| `TestAuthenticated_EmptySubjectDenied` | same setup → `Can(p,"","chat_message",Create)` false |
+| `TestAuthenticated_EnsureIdempotent` | `EnsureGrants` twice → one role, one permission per action, no error |
+| `TestAuthenticated_CacheInvalidated` | `Can` false, then `EnsureGrants` adds the grant → `Can` true (cache refreshed) |
 
-**Anti-footgun.** Do NOT remove the `EncodeFields`/`DecodeFields` no-ops from
-list types. `json.Encode` takes a `model.Encodable`, so deleting those breaks
-every call that serializes a list. That alternative was measured and rejected.
-`Len`, `At` and `Append` are the whole slice contract now and must survive
-untouched.
+## Stage 4 — documentation
 
-## Quality rules
+`README.md`: «Anyone signed in» section with `RoleAuthenticated` and `EnsureGrants`. `docs/ARCHITECTURE.md`: how the implicit role
+joins `resolveSubjectGrants`. `langc sync .` if any text changed.
 
-```
-RULE: never hand-edit a generated *_orm.go — run the generator.
-RULE: every repeated string is a named constant; string literals forbidden in logic.
-RULE: this repo's behaviour must not change; only dead methods disappear.
-```
+## Delivery check
 
-## Stage 1 — regenerate with the new `ormc`
+`gotest`. A tree that does not compile or whose tests did not run is a failed delivery.
 
-**Files:** `models_orm.go` (4 list types).
-
-1. `go get webtyp.com/model@latest` so `FielderSlice` is the narrowed one.
-2. Run `ormc` at the repo root. It rewrites the generated file(s) in place; the
-   header is `DO NOT EDIT. generated by webtyp.com/ormc`.
-3. Confirm the diff contains **only** removals of the two stub methods —
-   4 `Schema()` and 4 `Pointers()` lines — and nothing else. If
-   any other line moved, the installed `ormc` predates phase B: stop and say so
-   in the PR instead of committing the drift.
-
-## Acceptance criteria
-
-1. `go build ./...`, `go vet ./...`, `go test ./...` green.
-2. `grep -rn "List) Schema() \[\]model.Field" --include='*.go' .` → empty.
-3. `grep -rn "List) Pointers()" --include='*.go' .` → empty.
-4. `grep -rnc "Append() model.Fielder" --include='*.go' .` → unchanged from
-   before the change: the traversal contract survived.
-5. `go.mod` requires the phase A tag of `webtyp.com/model`; no `replace`.
-6. `grep -rn "TODO\|FIXME\|Deprecated" --include='*.go' .` → only hits that
-   predate this change.
-
-## Out of scope
-
-- Changing `model.FielderSlice` itself — phase A, already shipped.
-- Changing what `ormc` emits — phase B, already shipped.
-- Removing the `EncodeFields`/`DecodeFields` no-ops — measured and rejected.
-- Any behaviour change in this repo. If a test fails, the cause is upstream:
-  report it, do not paper over it here.
-
-| Stage | Files | Action |
-|---|---|---|
-| 1 | `models_orm.go` | regenerate with `ormc`; 4 stub pairs disappear |
+| Stage | Files |
+|---|---|
+| 1 | `authenticated.go` |
+| 2 | `subject_grants.go` |
+| 3 | `tests/authenticated_test.go`, `docs/TESTS.md` |
+| 4 | `README.md`, `docs/ARCHITECTURE.md` |

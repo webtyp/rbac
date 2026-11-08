@@ -1,9 +1,8 @@
 {
   "languages": ["es", "zh", "hi", "ar", "pt", "fr", "de", "ru"],
   "keys": {
-    "code": ["código", "", "", "", "", "", "", ""],
+    "action": ["acción", "", "", "", "", "", "", ""],
     "description": ["descripción", "", "", "", "", "", "", ""],
-    "name": ["nombre", "", "", "", "", "", "", ""],
     "permission id": ["id del permiso", "", "", "", "", "", "", ""],
     "project id": ["id del proyecto", "", "", "", "", "", "", ""],
     "resource": ["recurso", "", "", "", "", "", "", ""],
