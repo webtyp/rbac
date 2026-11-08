@@ -12,7 +12,7 @@ require (
 
 require (
 	webtyp.com/sqlite v0.3.28
-	webtyp.com/storage v0.1.18
+	webtyp.com/storage v0.1.19
 )
 
 require (
