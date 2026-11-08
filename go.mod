@@ -5,7 +5,7 @@ go 1.25.2
 require (
 	webtyp.com/ddl v0.0.46
 	webtyp.com/fmt v1.0.0 // indirect
-	webtyp.com/model v0.2.12
+	webtyp.com/model v0.2.15
 	webtyp.com/orm v0.12.26
 	webtyp.com/user v0.3.14
 )
