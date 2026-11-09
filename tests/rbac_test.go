@@ -1,15 +1,13 @@
 package tests
 
 import (
-	"path/filepath"
-
 	"testing"
-	"webtyp.com/sqlite"
 
 	"webtyp.com/ddl"
 	"webtyp.com/model"
 	"webtyp.com/orm"
 	"webtyp.com/rbac"
+	"webtyp.com/storage"
 	"webtyp.com/storage/mem"
 )
 
@@ -43,9 +41,9 @@ type mockExecer struct {
 	executed []string
 }
 
-func (m *mockExecer) Exec(query string, args ...any) error {
+func (m *mockExecer) Exec(query string, args ...any) (storage.Result, error) {
 	m.executed = append(m.executed, query)
-	return nil
+	return storage.Affected(0), nil
 }
 
 type mockCompiler struct{}
@@ -291,43 +289,6 @@ func TestGetRoleByCodeErrorsOnAmbiguity(t *testing.T) {
 	_, err := svc.GetRoleByCode(testProject, "editor")
 	if !rbac.IsDuplicateRoleCode(err) {
 		t.Fatalf("expected GetRoleByCode to return ErrDuplicateRoleCode on duplicate codes, got %v", err)
-	}
-}
-
-func TestMigrateDetectsPreexistingDuplicates(t *testing.T) {
-	// Real SQL (SQLite in a temp file): Migrate syncs the tables and then must find the duplicates.
-	conn, err := sqlite.Open(filepath.Join(t.TempDir(), "rbac.db"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	ddlCompiler, ok := sqlite.DDLCompiler(conn)
-	if !ok {
-		t.Fatal("sqlite must give a ddl.Compiler")
-	}
-	db := orm.New(conn)
-	if err := ddl.New(conn, ddlCompiler).Sync(&rbac.Role{}); err != nil {
-		t.Fatal(err)
-	}
-
-	// Seed duplicate role rows directly (bypassing CreateRole, before the unique index exists)
-	if err := db.Create(&rbac.Role{ProjectId: "proj-dup", Id: "r1", Code: "dupcode", Name: "N1"}); err != nil {
-		t.Fatalf("db.Create r1: %v", err)
-	}
-	if err := db.Create(&rbac.Role{ProjectId: "proj-dup", Id: "r2", Code: "dupcode", Name: "N2"}); err != nil {
-		t.Fatalf("db.Create r2: %v", err)
-	}
-
-	dups, err := rbac.FindDuplicateRoleCodes(db)
-	if err != nil {
-		t.Fatalf("FindDuplicateRoleCodes: %v", err)
-	}
-	if len(dups) != 1 || dups[0].ProjectID != "proj-dup" || dups[0].Code != "dupcode" {
-		t.Fatalf("FindDuplicateRoleCodes expected [proj-dup, dupcode], got %+v", dups)
-	}
-
-	err = rbac.Migrate(db.RawConn(), ddlCompiler)
-	if !rbac.IsDuplicateRoleCode(err) {
-		t.Fatalf("expected Migrate to return ErrDuplicateRoleCode on preexisting duplicates, got %v", err)
 	}
 }
 

@@ -103,5 +103,6 @@ func Migrate(conn ddl.Execer, ddlCompiler ddl.Compiler) error {
 		}
 	}
 
-	return conn.Exec(roleCodeUniqueIndex)
+	_, err = conn.Exec(roleCodeUniqueIndex)
+	return err
 }
