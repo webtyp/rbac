@@ -75,3 +75,5 @@ Never ignore the count where the caller can use it, and never invent a count: a 
 2. Delete `TestMigrateDetectsPreexistingDuplicates` and its `docs/TESTS.md` row; `rbac`'s own tests run the suite only if `storage/mem` can serve it (a mem `Conn` has no `ddl.Compiler`: if it cannot, `rbac` has **no** test of this clause; the databases prove it).
 3. `go mod tidy`: `webtyp.com/sqlite` and `webtyp.com/sqlt` leave `go.mod`.
 4. `README.md`/`docs/ARCHITECTURE.md`: «a database proves `rbac` by running `rbac/conformance.Run`». Each driver (`sqlite`, `postgres`) adds that call to its own tests in a later pass; this plan does not touch them.
+## Executor notes
+- Added the executor changes but `conformance` tests have some execution blocks that we did not fix.
