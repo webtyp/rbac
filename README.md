@@ -92,4 +92,4 @@ silent `false, nil`).
 | Detectar roles duplicados antes de migrar | `rbac.FindDuplicateRoleCodes(db)` |
 | Permisos de un sujeto tal como están guardados (para el navegador) | `svc.SubjectGrants(projectID, subjectID) ([]model.Grant, error)` — evaluar con `model.AnyGrant` |
 
-a database proves `rbac` by running `rbac/conformance.Run`.
+Una base de datos demuestra que sirve a `rbac` ejecutando `rbac/conformance.Run` en sus propias pruebas.

@@ -110,4 +110,4 @@ Para permitir operaciones comunes a cualquier sujeto con una sesión abierta (si
 
 El método `EnsureGrants(projectID, rbac.RoleAuthenticated, grants)` asegura la existencia del rol y sus permisos de manera idempotente e invalida el caché automáticamente.
 
-a database proves `rbac` by running `rbac/conformance.Run`.
+Una base de datos demuestra que sirve a `rbac` ejecutando `rbac/conformance.Run` en sus propias pruebas.

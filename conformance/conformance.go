@@ -9,11 +9,15 @@ import (
 	"webtyp.com/storage"
 )
 
-type Factory struct{
+// Factory builds the database a clause runs on.
+type Factory struct {
 	Name string
-	New func(t *testing.T) (conn storage.Conn, compiler ddl.Compiler)
+	New  func(t *testing.T) (conn storage.Conn, compiler ddl.Compiler)
 }
 
+// Run runs the clauses every database must pass to serve rbac. A driver calls it from its own tests.
+//
+//	conformance.Run(t, conformance.Factory{Name: "sqlite", New: newSqliteDatabase})
 func Run(t *testing.T, f Factory) {
 	t.Run(f.Name, func(t *testing.T) {
 		t.Run("migrate_detects_preexisting_duplicates", func(t *testing.T) {

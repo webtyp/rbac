@@ -1,15 +1,14 @@
 package tests
 
 import (
-
 	"testing"
 
 	"webtyp.com/ddl"
 	"webtyp.com/model"
 	"webtyp.com/orm"
 	"webtyp.com/rbac"
-	"webtyp.com/storage/mem"
 	"webtyp.com/storage"
+	"webtyp.com/storage/mem"
 )
 
 func newTestService(t *testing.T) *rbac.Service {
@@ -292,7 +291,6 @@ func TestGetRoleByCodeErrorsOnAmbiguity(t *testing.T) {
 		t.Fatalf("expected GetRoleByCode to return ErrDuplicateRoleCode on duplicate codes, got %v", err)
 	}
 }
-
 
 func TestRevokeRoleByCodeInvalidatesCache(t *testing.T) {
 	svc := newTestService(t)
