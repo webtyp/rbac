@@ -2,8 +2,10 @@
 PLAN: "refactor!: Exec reports rows affected and a duplicate key (storage.Result, storage.Duplicate) — rbac"
 EXECUTOR: jules
 REVIEWER: none
-STATUS: running
+STATUS: review
 SESSION: 14905687378895729027
+PR: https://github.com/webtyp/rbac/pull/6
+REVIEWED_COMMIT: e857d26616b5cf23c086ce5e4ad98a9dacf6b654
 ---
 
 > Read AGENTS.md at the repo root before any change.
