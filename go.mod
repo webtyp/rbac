@@ -14,7 +14,7 @@ require webtyp.com/storage v0.2.1
 
 require (
 	webtyp.com/calendar v0.1.0 // indirect
-	webtyp.com/crud v0.0.9 // indirect
+	webtyp.com/crud v0.0.10 // indirect
 	webtyp.com/definitioncheck v0.0.3 // indirect
 	webtyp.com/escape v0.1.0 // indirect
 	webtyp.com/events v0.1.8 // indirect
