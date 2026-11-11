@@ -10,7 +10,7 @@ require (
 	webtyp.com/user v0.3.14
 )
 
-require webtyp.com/storage v0.2.1
+require webtyp.com/storage v0.2.3
 
 require (
 	webtyp.com/calendar v0.1.0 // indirect
