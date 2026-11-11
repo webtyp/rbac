@@ -6,7 +6,7 @@ require (
 	webtyp.com/ddl v0.0.49
 	webtyp.com/fmt v1.0.0 // indirect
 	webtyp.com/model v0.2.21
-	webtyp.com/orm v0.12.30
+	webtyp.com/orm v0.12.37
 	webtyp.com/user v0.3.14
 )
 
