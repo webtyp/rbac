@@ -60,6 +60,19 @@ func (m *Service) SetRoleSessionTTL(projectID, id string, ttl int64) error {
 	return m.db.Update(r, orm.Eq(Role_.ProjectId, r.ProjectId), orm.Eq(Role_.Id, r.Id))
 }
 
+// SetRoleTone sets the role's categorical colour tone (a webtyp.com/color.Tone name;
+// empty lets the UI suggest one from the role code).
+func (m *Service) SetRoleTone(projectID, id, tone string) error {
+	r := &Role{}
+	qb := m.db.Query(r).Where(Role_.ProjectId).Eq(projectID).Where(Role_.Id).Eq(id)
+	r, err := ReadOneRole(qb, r)
+	if err != nil {
+		return err
+	}
+	r.Tone = tone
+	return m.db.Update(r, orm.Eq(Role_.ProjectId, r.ProjectId), orm.Eq(Role_.Id, r.Id))
+}
+
 func (m *Service) GetRole(projectID, id string) (*Role, error) {
 	r := &Role{}
 	qb := m.db.Query(r).Where(Role_.ProjectId).Eq(projectID).Where(Role_.Id).Eq(id)

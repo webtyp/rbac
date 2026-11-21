@@ -14,13 +14,14 @@ type Role struct {
 	Name string
 	Description string
 	SessionTtl int64
+	Tone string
 }
 
 func (m *Role) ModelName() string { return "role" }
 
 func (m *Role) Schema() []model.Field { return RoleModel.Fields }
 
-func (m *Role) Pointers() []any { return []any{&m.ProjectId, &m.Id, &m.Code, &m.Name, &m.Description, &m.SessionTtl} }
+func (m *Role) Pointers() []any { return []any{&m.ProjectId, &m.Id, &m.Code, &m.Name, &m.Description, &m.SessionTtl, &m.Tone} }
 
 func (m *Role) IsNil() bool { return m == nil }
 
@@ -31,6 +32,7 @@ func (m *Role) EncodeFields(w model.FieldWriter) {
 	w.String("name", m.Name)
 	w.String("description", m.Description)
 	w.Int("session_ttl", m.SessionTtl)
+	if m.Tone != "" { w.String("tone", m.Tone) }
 }
 
 func (m *Role) DecodeFields(r model.FieldReader) {
@@ -40,6 +42,7 @@ func (m *Role) DecodeFields(r model.FieldReader) {
 	if v, ok := r.String("name"); ok { m.Name = v }
 	if v, ok := r.String("description"); ok { m.Description = v }
 	if v, ok := r.Int("session_ttl"); ok { m.SessionTtl = v }
+	if v, ok := r.String("tone"); ok { m.Tone = v }
 }
 
 type RoleList []*Role
@@ -55,6 +58,9 @@ func (m *Role) Validate(action byte) error {
 	return model.ValidateFields(action, m)
 }
 
+func (*Role) Allow() model.Action     { return RoleModel.Allow }
+func (*RoleList) Allow() model.Action { return RoleModel.Allow }
+
 var Role_ = struct {
 	ProjectId string
 	Id string
@@ -62,6 +68,7 @@ var Role_ = struct {
 	Name string
 	Description string
 	SessionTtl string
+	Tone string
 }{
 	ProjectId: "project_id",
 	Id: "id",
@@ -69,6 +76,7 @@ var Role_ = struct {
 	Name: "name",
 	Description: "description",
 	SessionTtl: "session_ttl",
+	Tone: "tone",
 }
 
 func ReadOneRole(qb *orm.QB, model *Role) (*Role, error) {
@@ -132,6 +140,9 @@ func (s *PermissionList) DecodeFields(_ model.FieldReader) {}
 func (m *Permission) Validate(action byte) error {
 	return model.ValidateFields(action, m)
 }
+
+func (*Permission) Allow() model.Action     { return PermissionModel.Allow }
+func (*PermissionList) Allow() model.Action { return PermissionModel.Allow }
 
 var Permission_ = struct {
 	ProjectId string
@@ -203,6 +214,9 @@ func (m *UserRole) Validate(action byte) error {
 	return model.ValidateFields(action, m)
 }
 
+func (*UserRole) Allow() model.Action     { return UserRoleModel.Allow }
+func (*UserRoleList) Allow() model.Action { return UserRoleModel.Allow }
+
 var UserRole_ = struct {
 	ProjectId string
 	UserId string
@@ -268,6 +282,9 @@ func (s *RolePermissionList) DecodeFields(_ model.FieldReader) {}
 func (m *RolePermission) Validate(action byte) error {
 	return model.ValidateFields(action, m)
 }
+
+func (*RolePermission) Allow() model.Action     { return RolePermissionModel.Allow }
+func (*RolePermissionList) Allow() model.Action { return RolePermissionModel.Allow }
 
 var RolePermission_ = struct {
 	ProjectId string

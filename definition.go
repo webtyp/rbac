@@ -22,6 +22,7 @@ var RoleModel = model.Definition{
 		// session (see veltylabs/iam's use of the MOST restrictive SessionTTL
 		// among a user's roles when issuing an authorization token).
 		{Name: "session_ttl", Type: model.Int()},
+		{Name: "tone", Type: model.Text(), OmitEmpty: true},
 	},
 }
 
